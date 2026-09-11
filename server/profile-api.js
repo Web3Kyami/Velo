@@ -26,7 +26,7 @@ const cleanName = (value) => {
 export function createProfileApi() {
   return async (request, response, next) => {
     const requestUrl = new URL(request.url || '/', 'http://velo.local')
-    const match = requestUrl.pathname.match(/^\/api\/profile-meta\/(0x[a-f0-9]{40})$/i)
+    const match = requestUrl.pathname.match(/^(?:\/api)?\/profile-meta\/(0x[a-f0-9]{40})$/i)
     if (!match) return next ? next() : false
 
     const walletAddress = match[1].toLowerCase()
