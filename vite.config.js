@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import { createCallsApi } from './server/calls-api.js'
+import { createVeloApi } from './server/api.js'
 
 export default defineConfig({
   build: {
@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [{
     name: 'velo-api',
     configureServer(server) {
-      server.middlewares.use('/api', createCallsApi())
+      server.middlewares.use('/api', createVeloApi())
     },
   }],
 })
