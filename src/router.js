@@ -7,7 +7,9 @@ if (path === '/') {
 } else if (path === '/app') {
   entry = import('./product.js')
 } else if (path.startsWith('/profile/')) {
-  entry = import('./profile-v3.js')
+  entry = import('./profile-v3.js').then(() => import('./profile-name-enhancer.js'))
+} else if (path.startsWith('/call/')) {
+  entry = import('./receipt-v4.js')
 } else {
   entry = import('./main.js')
 }
