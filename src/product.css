@@ -1,0 +1,68 @@
+body.product-mode {
+  --ink: #f0ede4;
+  --ink-raised: #fffdf8;
+  --ink-soft: #e7e2d7;
+  --paper: #121318;
+  --muted: #66665f;
+  --faint: #77776f;
+  --rule: rgba(18, 19, 24, .12);
+  --rule-strong: rgba(18, 19, 24, .24);
+  --acid: #2e55ff;
+  --acid-soft: rgba(46, 85, 255, .08);
+  background: #f0ede4;
+  color: #121318;
+}
+body.product-mode::before { display: none; }
+.product-mode .site-header { min-height: 70px; border-bottom-color: #d5cfc2; background: rgba(244,241,232,.96); backdrop-filter: blur(10px); }
+.product-mode .wordmark__mark { border-color: #121318; background: #121318; color: white; }
+.product-mode .desktop-nav a, .product-mode .mobile-nav a { color: #66665f; }
+.product-mode .desktop-nav a:hover, .product-mode .mobile-nav a:hover { color: #121318; }
+.product-mode .header-actions .button--quiet { border-color: #121318; background: #121318; color: white; }
+.product-mode .hero,
+.product-mode .anatomy,
+.product-mode .state-section,
+.product-mode .record-section,
+.product-mode .final-cta,
+.product-mode .site-footer { display: none !important; }
+.product-mode main#top { min-height: calc(100vh - 70px); overflow: visible; }
+.product-mode .live-section { grid-template-columns: minmax(250px, .55fr) minmax(0, 1.45fr); min-height: calc(100vh - 70px); gap: clamp(42px, 8vw, 120px); align-items: start; border-top: 0; padding-top: 70px; padding-bottom: 90px; }
+.product-mode .section-intro { position: sticky; top: 115px; }
+.product-mode .section-intro h2 { margin-top: 18px; color: #121318; font-size: clamp(46px, 5.2vw, 78px); }
+.product-mode .section-intro h2 em { color: #2e55ff; }
+.product-mode .section-intro .body-muted { color: #66665f; }
+.product-mode .section-intro .button--outline { border-color: #cfc8ba; color: #121318; }
+.product-mode .section-intro .button--outline:hover { border-color: #2e55ff; color: #2e55ff; }
+.product-mode .empty-panel { border-color: #d0cabd; background: #fffdf8; box-shadow: 0 22px 60px rgba(28,30,36,.06); }
+.product-mode .empty-panel__head, .product-mode .empty-panel__footer { color: #77776f; }
+.product-mode .status-copy, .product-mode .body-muted, .product-mode .muted { color: #66665f; }
+.product-mode .live-market-row { background: #fffdf8; }
+.product-mode .live-market-row:hover { background: #faf7ef; }
+.product-mode .live-market-row__question { color: #121318; }
+.product-mode .market-select { border-bottom-color: #121318; color: #121318; }
+.product-mode .market-select:hover { border-color: #2e55ff; color: #2e55ff; }
+.product-mode .call-launcher { border-color: #cfc8ba; background: #fffdf8; box-shadow: 0 22px 60px rgba(28,30,36,.08); }
+.product-mode .call-launcher__head p, .product-mode .call-form__note, .product-mode .amount-field small { color: #66665f; }
+.product-mode .launcher-close { border-color: #d5cfc2; color: #66665f; }
+.product-mode .side-option { border-color: #d5cfc2; }
+.product-mode .side-option:has(input:checked) { border-color: #2e55ff; background: #eef1ff; }
+.product-mode .amount-field input { border-color: #d5cfc2; background: white; color: #121318; }
+.product-mode .button--primary { background: #2e55ff; color: white; }
+.product-mode .button--primary:hover { background: #1738cf; }
+.product-mode .call-form__summary strong, .product-mode .eyebrow--accent { color: #2e55ff; }
+.product-mode .signal-dot { background: #2e55ff; box-shadow: 0 0 0 4px rgba(46,85,255,.1); }
+.product-mode .call-confirmation > p { color: #66665f; }
+.product-mode .text-link { border-bottom-color: #77776f; color: #121318; }
+.product-mode .text-link:hover { border-color: #2e55ff; color: #2e55ff; }
+.product-mode .toast { border-color: #cfc8ba; background: #fffdf8; color: #121318; box-shadow: 0 18px 50px rgba(28,30,36,.12); }
+.product-mode .toast__icon { border-color: #2e55ff; color: #2e55ff; }
+.product-mode .toast p { color: #66665f; }
+@media (max-width: 900px) {
+  .product-mode .live-section { grid-template-columns: 1fr; gap: 45px; padding-top: 50px; }
+  .product-mode .section-intro { position: static; }
+}
+@media (max-width: 650px) {
+  .product-mode .site-header { min-height: 66px; }
+  .product-mode .mobile-nav { top: 66px; background: #f4f1e8; }
+  .product-mode .menu-trigger { border-color: #cfc8ba; color: #121318; }
+  .product-mode .live-section { padding-top: 42px; padding-bottom: 60px; }
+}
