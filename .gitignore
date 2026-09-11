@@ -1,4 +1,5 @@
 .private/
+.design-reference/
 node_modules/
 dist/
 .env
