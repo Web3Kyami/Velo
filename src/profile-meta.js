@@ -9,11 +9,15 @@ export async function getProfileMetadata(walletAddress) {
 
 export async function updateProfileDisplayName(walletAddress, displayName) {
   if (!window.ethereum) throw new Error('No compatible browser wallet was detected.')
-  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+
+  let accounts = await window.ethereum.request({ method: 'eth_accounts' })
+  if (!accounts?.[0]) accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+
   const connected = accounts?.[0]
   if (!connected || connected.toLowerCase() !== walletAddress.toLowerCase()) {
     throw new Error('Connect the wallet that owns this profile.')
   }
+
   const cleanName = String(displayName || '').trim().replace(/\s+/g, ' ')
   const message = profileNameMessage(walletAddress, cleanName)
   const signature = await window.ethereum.request({ method: 'personal_sign', params: [message, connected] })

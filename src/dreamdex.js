@@ -61,8 +61,12 @@ const switchToExpectedChain = async () => {
 
 const attachSigner = async (address) => {
   const currentExchange = await getExchange()
-  const walletClient = sdk.createWalletClient({ chain: sdk.chain, transport: sdk.custom(window.ethereum) })
-  currentExchange.setSigner({ walletClient })
+  const walletClient = sdk.createWalletClient({
+    account: address,
+    chain: sdk.chain,
+    transport: sdk.custom(window.ethereum),
+  })
+  currentExchange.setSigner({ walletClient, account: address })
   walletAddress = address
   return address
 }
@@ -81,12 +85,27 @@ export async function restoreWallet() {
 export async function connectWallet() {
   await getExchange()
   if (!window.ethereum) throw new Error('No browser wallet was detected. Install MetaMask or another compatible wallet.')
+
+  const expectedChainId = `0x${sdk.chain.id.toString(16)}`
+  const existingAccounts = await window.ethereum.request({ method: 'eth_accounts' })
+  const currentChainId = await window.ethereum.request({ method: 'eth_chainId' })
+
+  if (existingAccounts?.[0] && currentChainId?.toLowerCase() === expectedChainId.toLowerCase()) {
+    return attachSigner(existingAccounts[0])
+  }
+
+  if (existingAccounts?.[0]) {
+    await switchToExpectedChain()
+    const switchedChainId = await window.ethereum.request({ method: 'eth_chainId' })
+    if (switchedChainId?.toLowerCase() !== expectedChainId.toLowerCase()) throw new Error(`Your wallet is not connected to ${networkLabel}.`)
+    return attachSigner(existingAccounts[0])
+  }
+
   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
   await switchToExpectedChain()
   const address = accounts?.[0] || (await window.ethereum.request({ method: 'eth_accounts' }))?.[0]
   if (!address) throw new Error('No wallet account was selected.')
   const connectedChainId = await window.ethereum.request({ method: 'eth_chainId' })
-  const expectedChainId = `0x${sdk.chain.id.toString(16)}`
   if (connectedChainId?.toLowerCase() !== expectedChainId.toLowerCase()) throw new Error(`Your wallet is not connected to ${networkLabel}.`)
   return attachSigner(address)
 }
