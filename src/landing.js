@@ -13,6 +13,15 @@ const icon = (name) => ({
 
 const brand = (mini = false) => `<span class="${mini ? 'mini-old-velo-mark' : 'old-velo-mark-landing'}">v</span><strong>velo</strong>`
 
+const logoStyles = document.createElement('style')
+logoStyles.textContent = `
+.old-velo-mark-landing{display:grid;width:31px;height:31px;place-items:center;border-radius:8px;background:#11171d;color:#b9ed4c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);font-family:Georgia,serif;font-size:20px;font-style:italic;font-weight:900;line-height:1}
+.mini-old-velo-mark{display:grid;width:23px;height:23px;place-items:center;border-radius:6px;background:#11171d;color:#b9ed4c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);font-family:Georgia,serif;font-size:15px;font-style:italic;font-weight:900;line-height:1}
+.landing-brand-v2 strong{font-weight:760;text-transform:lowercase}
+.mini-brand strong{font-weight:750;text-transform:lowercase}
+`
+document.head.append(logoStyles)
+
 document.body.className = 'landing-body landing-body-v2'
 document.title = 'Velo — Put your calls on the record'
 
