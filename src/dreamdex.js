@@ -7,6 +7,7 @@ export const networkLabel = testnet ? 'Somnia testnet' : 'Somnia mainnet'
 let exchange
 let sdk
 let walletAddress
+
 const sdkPromise = Promise.all([
   import('@somnia-chain/markets-sdk'),
   import('@somnia-chain/markets-sdk/chains'),
@@ -43,13 +44,43 @@ export function probabilityPercent(rawPrice, decimals) {
   return sdk.priceToProbability(rawPrice, decimals) * 100
 }
 
+const switchToExpectedChain = async () => {
+  const targetChainId = `0x${sdk.chain.id.toString(16)}`
+  const currentChainId = await window.ethereum.request({ method: 'eth_chainId' })
+  if (currentChainId?.toLowerCase() === targetChainId.toLowerCase()) return
+
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: targetChainId }],
+    })
+  } catch (error) {
+    if (error?.code !== 4902) throw new Error(`Switch your wallet to ${networkLabel} to continue.`)
+    const explorerUrl = sdk.chain.blockExplorers?.default?.url
+    await window.ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: targetChainId,
+        chainName: sdk.chain.name,
+        nativeCurrency: sdk.chain.nativeCurrency,
+        rpcUrls: sdk.chain.rpcUrls.default.http,
+        blockExplorerUrls: explorerUrl ? [explorerUrl] : undefined,
+      }],
+    })
+  }
+}
+
 export async function connectWallet() {
   const currentExchange = await getExchange()
-  if (!window.ethereum) throw new Error('No browser wallet was detected.')
+  if (!window.ethereum) throw new Error('No browser wallet was detected. Install MetaMask or another compatible wallet.')
+  await window.ethereum.request({ method: 'eth_requestAccounts' })
+  await switchToExpectedChain()
+
   const walletClient = sdk.createWalletClient({ chain: sdk.chain, transport: sdk.custom(window.ethereum) })
   const [address] = await walletClient.requestAddresses()
   const connectedChainId = await walletClient.getChainId()
-  if (connectedChainId !== sdk.chain.id) throw new Error(`Switch your wallet to ${networkLabel} before continuing.`)
+  if (connectedChainId !== sdk.chain.id) throw new Error(`Your wallet is not connected to ${networkLabel}.`)
+
   currentExchange.setSigner({ walletClient })
   walletAddress = address
   return address
@@ -96,8 +127,12 @@ export async function publishCall({ marketId, outcome, amount }) {
   }
 
   const unifiedMarkets = await currentExchange.loadMarkets(true)
-  const unifiedMarket = Object.values(unifiedMarkets).find((candidate) => candidate.info.marketType === 'BINARY' && candidate.info.marketId.toLowerCase() === market.marketId.toLowerCase())
+  const unifiedMarket = Object.values(unifiedMarkets).find(
+    (candidate) => candidate.info.marketType === 'BINARY'
+      && candidate.info.marketId.toLowerCase() === market.marketId.toLowerCase(),
+  )
   if (!unifiedMarket) throw new Error('The live window could not be prepared for a wallet write.')
+
   const selectedOutcome = unifiedMarket.outcomes?.find((candidate) => candidate.index === outcome)
   if (!selectedOutcome) throw new Error('Choose a valid side for this window.')
   if (unifiedMarket.limits.amount.min !== undefined && requestedAmount < unifiedMarket.limits.amount.min) {
@@ -108,10 +143,18 @@ export async function publishCall({ marketId, outcome, amount }) {
   const asks = outcome === 0 ? book.yesAsks : book.noAsks
   if (!asks?.[0]) throw new Error('There is no available offer on that side right now. Refresh and try again.')
 
-  const order = await currentExchange.createOrder(selectedOutcome.symbol, 'market', 'buy', requestedAmount, undefined, { slippage: 0.02 })
+  const order = await currentExchange.createOrder(
+    selectedOutcome.symbol,
+    'market',
+    'buy',
+    requestedAmount,
+    undefined,
+    { slippage: 0.02 },
+  )
   const info = order.info && typeof order.info === 'object' ? order.info : null
   const receipt = info?.receipt
   if (!receipt || receipt.status !== 'success') throw new Error('The transaction did not confirm successfully. No Call was created.')
+
   const fills = Array.isArray(info.fills) ? info.fills : []
   const summary = rawFillSummary(fills, outcome, market.quoteDecimals, market.baseDecimals)
   if (!summary) throw new Error('The transaction confirmed with zero fill. No Call was created.')
@@ -154,4 +197,33 @@ export async function getPublicProfile(address) {
   const body = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(body.error || 'The public Velo record could not be found.')
   return body
+}
+
+export async function getClaimablePositions(address) {
+  const response = await fetch(`/api/claimable/${encodeURIComponent(address)}`)
+  const body = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(body.error || 'Claimable positions could not be loaded.')
+  return body.positions || []
+}
+
+export async function redeemClaimablePosition(position) {
+  const currentExchange = await getExchange()
+  if (!currentExchange.walletAddress || !walletAddress) throw new Error('Connect the wallet that owns this position first.')
+
+  const onchain = await currentExchange.client.getMarketOnchain(position.marketId)
+  if (!onchain?.isResolved && !onchain?.isVoided) throw new Error('This market is not ready to claim yet.')
+
+  const outcomeIdx = position.outcome === 'No' ? 1 : 0
+  const expectedWinner = Number(onchain.winningOutcome) === 0 ? 0 : 1
+  if (!onchain.isVoided && outcomeIdx !== expectedWinner) throw new Error('This position did not win and has no payout to claim.')
+
+  const result = await currentExchange.trader.redeem({
+    marketId: position.marketId,
+    market: onchain.marketAddress,
+    outcomeToken: onchain.outcomeToken,
+    outcomeIdx,
+    amount: BigInt(position.amountRaw),
+  })
+  if (result.receipt?.status === 'reverted') throw new Error('The claim transaction reverted.')
+  return result
 }
