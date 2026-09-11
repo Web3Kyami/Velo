@@ -1,0 +1,97 @@
+const testnet = import.meta.env.VITE_DREAMDEX_NETWORK !== 'mainnet'
+const indexerUrl = import.meta.env.VITE_DREAMDEX_INDEXER_URL || (testnet
+  ? 'https://dev.smk.somnia.host/v1/graphql'
+  : 'https://prd.smk.somnia.host/v1/graphql')
+
+let exchange
+let sdk
+const cache = new Map()
+
+const ready = Promise.all([
+  import('@somnia-chain/markets-sdk'),
+  import('@somnia-chain/markets-sdk/chains'),
+]).then(([marketsSdk, chains]) => {
+  const chain = testnet ? chains.somniaShannon : chains.somniaMainnet
+  const wsRpcUrl = import.meta.env.VITE_DREAMDEX_WS_RPC_URL || chain.rpcUrls.default.webSocket?.[0]
+  const addresses = testnet ? marketsSdk.SOMNIA_TESTNET_ADDRESSES : marketsSdk.SOMNIA_MAINNET_ADDRESSES
+  sdk = marketsSdk
+  exchange = new marketsSdk.SomniaMarkets({ indexerUrl, chain, wsRpcUrl, addresses })
+  return exchange
+})
+
+const timeValue = (candle) => Number(candle.timestamp ?? candle.time ?? candle.bucketStart ?? candle.openTime ?? candle.start ?? 0)
+const closeValue = (candle) => candle.close ?? candle.closePrice ?? candle.last ?? candle.price ?? null
+
+const asProbability = (raw, decimals) => {
+  if (raw === null || raw === undefined) return null
+  try {
+    const value = sdk.priceToProbability(raw, decimals) * 100
+    if (Number.isFinite(value)) return Math.max(0, Math.min(100, value))
+  } catch {}
+  const numeric = Number(raw)
+  if (!Number.isFinite(numeric)) return null
+  if (numeric >= 0 && numeric <= 1) return numeric * 100
+  if (numeric >= 0 && numeric <= 100) return numeric
+  return null
+}
+
+const bucketFor = (market) => {
+  const duration = Math.max(60, Number(market.expiry || 0) - Number(market.tradingStart || market.startTime || 0))
+  if (duration <= 20 * 60) return 60
+  if (duration <= 2 * 60 * 60) return 300
+  return 900
+}
+
+export async function getMarketProbabilitySeries(marketOrId) {
+  const currentExchange = await ready
+  const market = typeof marketOrId === 'string'
+    ? await currentExchange.client.getBinaryMarket(marketOrId)
+    : marketOrId
+  if (!market?.marketId || !market?.poolAddress) return []
+
+  const key = market.marketId.toLowerCase()
+  const cached = cache.get(key)
+  if (cached && Date.now() - cached.at < 15_000) return cached.series
+
+  const from = Number(market.tradingStart ?? market.startTime ?? Math.max(0, Number(market.expiry) - 3600))
+  const to = Number(market.expiry)
+  try {
+    const candles = await currentExchange.client.getCandles(market.poolAddress, bucketFor(market), { from, to })
+    const series = (Array.isArray(candles) ? candles : [])
+      .filter((candle) => {
+        const candleMarket = String(candle.marketId ?? candle.market ?? '').toLowerCase()
+        return !candleMarket || candleMarket === key
+      })
+      .map((candle, index) => ({
+        t: timeValue(candle) || index,
+        value: asProbability(closeValue(candle), market.quoteDecimals),
+      }))
+      .filter((point) => point.value !== null)
+      .sort((a, b) => a.t - b.t)
+    cache.set(key, { at: Date.now(), series })
+    return series
+  } catch {
+    cache.set(key, { at: Date.now(), series: [] })
+    return []
+  }
+}
+
+export function linePath(series, width = 240, height = 54, pad = 3) {
+  if (!Array.isArray(series) || series.length < 2) return ''
+  const values = series.map((point) => Number(point.value)).filter(Number.isFinite)
+  if (values.length < 2) return ''
+  let min = Math.min(...values)
+  let max = Math.max(...values)
+  if (max - min < 2) { min -= 1; max += 1 }
+  return values.map((value, index) => {
+    const x = pad + (index / (values.length - 1)) * (width - pad * 2)
+    const y = pad + (1 - (value - min) / (max - min)) * (height - pad * 2)
+    return `${index ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+}
+
+export function sparklineMarkup(series, className = 'market-sparkline', width = 240, height = 54) {
+  const path = linePath(series, width, height)
+  if (!path) return `<div class="${className} ${className}--empty"><span>No trades yet</span></div>`
+  return `<svg class="${className}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Recent market probability"><path d="${path}" vector-effect="non-scaling-stroke"/></svg>`
+}
