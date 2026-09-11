@@ -5,11 +5,11 @@ let entry
 if (path === '/') {
   entry = import('./landing.js')
 } else if (path === '/app') {
-  entry = import('./product.js')
+  entry = import('./product-v4.js')
 } else if (path.startsWith('/profile/')) {
-  entry = import('./profile-v3.js').then(() => import('./profile-name-enhancer.js'))
+  entry = import('./profile-v4.js')
 } else if (path.startsWith('/call/')) {
-  entry = import('./receipt-v4.js')
+  entry = import('./receipt-v5.js')
 } else {
   entry = import('./main.js')
 }
