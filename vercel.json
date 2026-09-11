@@ -3,6 +3,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
+    { "source": "/app", "destination": "/" },
+    { "source": "/app/:path*", "destination": "/" },
     { "source": "/call/:path*", "destination": "/" },
     { "source": "/profile/:path*", "destination": "/" }
   ]
