@@ -11,12 +11,14 @@ const icon = (name) => ({
   arrow: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg>',
 }[name] || '')
 
+const brand = (mini = false) => `<span class="${mini ? 'mini-old-velo-mark' : 'old-velo-mark-landing'}">v</span><strong>velo</strong>`
+
 document.body.className = 'landing-body landing-body-v2'
 document.title = 'Velo — Put your calls on the record'
 
 document.querySelector('#app').innerHTML = `
   <header class="landing-nav-v2">
-    <a class="landing-brand-v2" href="/" aria-label="Velo home"><span class="brand-glyph"><i></i><i></i></span><strong>Velo</strong></a>
+    <a class="landing-brand-v2" href="/" aria-label="Velo home">${brand()}</a>
     <nav aria-label="Primary navigation">
       <a href="/app">Markets</a>
       <a href="#how-it-works">How it works</a>
@@ -69,7 +71,7 @@ document.querySelector('#app').innerHTML = `
         <p class="stage-note-v2">From a call<br>to a receipt.<br><strong>Always verifiable.</strong></p>
 
         <article class="preview-card receipt-preview">
-          <div class="receipt-head-v2"><a class="mini-brand" href="/" tabindex="-1"><span class="mini-glyph"><i></i><i></i></span>Velo</a><span class="won-pill">WON</span></div>
+          <div class="receipt-head-v2"><a class="mini-brand" href="/" tabindex="-1">${brand(true)}</a><span class="won-pill">WON</span></div>
           <div class="receipt-market-v2"><span class="asset-dot asset-dot--btc">₿</span><div><strong>BTC 1H</strong><small>Higher</small></div></div>
           <dl>
             <div><dt>Entry probability</dt><dd>52%</dd></div>
@@ -122,5 +124,5 @@ document.querySelector('#app').innerHTML = `
     </section>
   </main>
 
-  <footer class="landing-footer-v2"><a class="landing-brand-v2" href="/"><span class="brand-glyph"><i></i><i></i></span><strong>Velo</strong></a><span>Built on Somnia · Powered by DreamDEX Event Contracts</span></footer>
+  <footer class="landing-footer-v2"><a class="landing-brand-v2" href="/">${brand()}</a><span>Built on Somnia · Powered by DreamDEX Event Contracts</span></footer>
 `
