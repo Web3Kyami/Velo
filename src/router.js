@@ -6,6 +6,8 @@ if (path === '/') {
   entry = import('./landing.js')
 } else if (path === '/app') {
   entry = import('./product.js')
+} else if (path.startsWith('/profile/')) {
+  entry = import('./profile-v3.js')
 } else {
   entry = import('./main.js')
 }
