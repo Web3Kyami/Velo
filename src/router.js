@@ -5,11 +5,25 @@ let entry
 if (path === '/') {
   entry = import('./landing.js')
 } else if (path === '/app') {
-  entry = import('./product-v4.js')
+  entry = import('./wallet-session.js')
+    .then(async ({ restoreSession, warmTradeSession }) => {
+      await restoreSession()
+      warmTradeSession()
+      await import('./product-v4.js')
+      return import('./app-guards.js')
+    })
 } else if (path.startsWith('/profile/')) {
-  entry = import('./profile-v4.js')
+  entry = import('./wallet-session.js')
+    .then(async ({ restoreSession }) => {
+      await restoreSession()
+      return import('./profile-v4.js')
+    })
 } else if (path.startsWith('/call/')) {
-  entry = import('./receipt-v5.js')
+  entry = import('./wallet-session.js')
+    .then(async ({ restoreSession }) => {
+      await restoreSession()
+      return import('./receipt-v5.js')
+    })
 } else {
   entry = import('./main.js')
 }
