@@ -1,3 +1,3 @@
-import { createCallsApi } from '../server/calls-api.js'
+import { createVeloApi } from '../server/api.js'
 
-export default createCallsApi()
+export default createVeloApi()
