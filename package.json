@@ -1,0 +1,22 @@
+{
+  "name": "velo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node server/index.js",
+    "migrate:data": "node scripts/migrate-json-to-neon.js",
+    "test:phase15": "node --test test/phase15-settlement.test.js"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@somnia-chain/markets-sdk": "^0.30.0",
+    "viem": "^2.56.3"
+  }
+}

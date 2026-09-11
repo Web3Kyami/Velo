@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+.private/
+data/
+dist/
+node_modules/
+.git/
+*.log
